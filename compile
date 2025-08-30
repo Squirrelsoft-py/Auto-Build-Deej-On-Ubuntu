@@ -32,6 +32,7 @@ go build -o deej ./pkg/deej/cmd/deej
 COMPORT="$(ls /dev/ttyUSB* /dev/ttyACM* 2>/dev/null)"
 echo Deej connected at: "${COMPORT}" - trying to auto configure
 sed -i "s|COM4|$COMPORT|g" config.yaml
+sed -i "s|.exe||g" config.yaml
 
 # Ensure user can access serial devices
 echo Allowing Dialout for "$USER"
