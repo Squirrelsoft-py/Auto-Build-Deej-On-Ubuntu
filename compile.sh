@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Update packages and install development tools
+sudo apt update
+sudo apt install git build-essential golang
+
+# Clone deej repository
+git clone https://github.com/omriharel/deej.git
+cd deej
+
+
+# Install required development libraries
+sudo apt -y install libgtk-3-dev libappindicator3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev
+
+
+# Create symlinks so pkg-config can find the expected old library names
+sudo ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.0.pc
+sudo ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/ayatana-appindicator3-0.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/appindicator3-0.1.pc
+
+
+# Symlink Ayatana header to expected AppIndicator path
+OUTPUT="$(dpkg -L libayatana-appindicator3-dev | grep app-indicator.h)"
+sudo mkdir -p /usr/include/libappindicator
+sudo ln -s "${OUTPUT}" /usr/include/libappindicator/app-indicator.h
+
+
+# Build deej binary
+go build -o deej ./pkg/deej/cmd/deej
+
+
+# Detect Arduino COM port and update config
+COMPORT="$(ls /dev/ttyUSB* /dev/ttyACM* 2>/dev/null)"
+echo Deej connected at: "${COMPORT}" - trying to auto configure
+sed -i "s|COM4|$COMPORT|g" config.yaml
+
+# Ensure user can access serial devices
+echo Allowing Dialout for "$USER"
+sudo usermod -aG dialout "$USER"
+
+echo FINISHED
